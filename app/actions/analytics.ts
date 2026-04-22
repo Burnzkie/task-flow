@@ -38,7 +38,7 @@ export async function getAnalytics() {
     const date  = subDays(new Date(), 6 - i);
     const label = format(date, "MMM d");
     const count = recentActivity.filter(
-      (t) => format(t.updatedAt, "MMM d") === label
+      (t : { updatedAt: Date }) => format(t.updatedAt, "MMM d") === label
     ).length;
     return { date: label, completed: count };
   });
