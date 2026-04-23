@@ -129,7 +129,7 @@ export default function Sidebar({ initialProjects }: Props) {
 
       {/* User */}
       <div className="pt-4 border-t border-white/10">
-        <UserButton afterSignOutUrl="/sign-in" /> 
+        <UserButton/> 
       </div>
     </aside>
   );
