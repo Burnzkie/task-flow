@@ -2,22 +2,26 @@
 
 import { auth }   from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { subDays, format } from "date-fns"; 
+import { subDays, format } from "date-fns";
+
+type GroupByResult = { _count: { id: number } };
+type StatusGroup   = GroupByResult & { status: string };
+type PriorityGroup = GroupByResult & { priority: string };
 
 export async function getAnalytics() {
   const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized"); 
+  if (!userId) throw new Error("Unauthorized");
 
   const [tasksByStatus, tasksByPriority, recentActivity, totals] =
     await Promise.all([
       prisma.task.groupBy({
-        by:    ["status"],
-        where: { userId },
+        by:     ["status"],
+        where:  { userId },
         _count: { id: true },
       }),
       prisma.task.groupBy({
-        by:    ["priority"],
-        where: { userId },
+        by:     ["priority"],
+        where:  { userId },
         _count: { id: true },
       }),
       prisma.task.findMany({
@@ -38,13 +42,13 @@ export async function getAnalytics() {
     const date  = subDays(new Date(), 6 - i);
     const label = format(date, "MMM d");
     const count = recentActivity.filter(
-      (t : { updatedAt: Date }) => format(t.updatedAt, "MMM d") === label
+      (t: { updatedAt: Date }) => format(t.updatedAt, "MMM d") === label
     ).length;
     return { date: label, completed: count };
   });
 
   const totalTasks   = totals._count.id;
-  const doneTasks    = tasksByStatus.find((s) => s.status === "DONE")?._count.id ?? 0;
+  const doneTasks    = (tasksByStatus as StatusGroup[]).find((s) => s.status === "DONE")?._count.id ?? 0;
   const overdueTasks = await prisma.task.count({
     where: {
       userId,
@@ -54,8 +58,8 @@ export async function getAnalytics() {
   });
 
   return {
-    tasksByStatus:   tasksByStatus.map((s) => ({ name: s.status,   value: s._count.id })),
-    tasksByPriority: tasksByPriority.map((p) => ({ name: p.priority, value: p._count.id })),
+    tasksByStatus:   (tasksByStatus as StatusGroup[]).map((s) => ({ name: s.status,    value: s._count.id })),
+    tasksByPriority: (tasksByPriority as PriorityGroup[]).map((p) => ({ name: p.priority, value: p._count.id })),
     activityByDay:   last7Days,
     stats: {
       total:          totalTasks,
