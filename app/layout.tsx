@@ -5,6 +5,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "TaskFlow",
   description: "Your productivity workspace",
+  icons: {
+    icon: "/icon",
+  },
 };
 
 export default function RootLayout({
